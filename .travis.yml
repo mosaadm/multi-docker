@@ -1,0 +1,22 @@
+sudo: required
+services: 
+  - docker
+
+before_install:
+  - docker build -t mosaadm/react-test  -f ./client/Dockerfile.dev ./client
+
+script:    
+  - docker run -e CI=true mosaadm/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t mosaadm/multi-client ./client
+  - docker build -t mosaadm/multi-nginx ./nginx
+  - docker build -t mosaadm/multi-server ./server
+  - docker build -t mosaadm/multi-worker ./worker
+  # Login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Push images to docker hub
+  - docker push mosaadm/multi-client
+  - docker push mosaadm/multi-nginx
+  - docker push mosaadm/multi-server
+  - docker push mosaadm/multi-worker
